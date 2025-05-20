@@ -1,15 +1,17 @@
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TodoMVCProjectTest {
     private static ChromeDriver driver;
@@ -21,31 +23,85 @@ public class TodoMVCProjectTest {
 
     @Test
     void navigateToWebsite() throws Exception {
-        WebDriver driver = new ChromeDriver();
-
-        // Instruct the driver to browse to the TODOMVC website
         driver.get("https://todomvc.com/");
-
-
-        // Take a screenshot of what's currently on the page,
-        // and store it in a file 'initial_screenshot.png' in your project root
         takeScreenshot(driver, "initial_screenshot.png");
-
-        // Find the title of the webpage (the value inside the HTML
-        // <title> element) and print it to the terminal
         System.out.println(driver.getTitle());
+    }
+
+    @Test
+    void addHoverDeleteAndModifyTodoItem() throws Exception {
+        driver.get("https://todomvc.com/examples/react/dist/");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        Actions actions = new Actions(driver);
+
+        // TC08: DELETE AN ITEM
+        WebElement addInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        addInput.sendKeys("Test Item 1");
+        addInput.sendKeys(Keys.ENTER);
+
+        WebElement itemToDelete = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+        assertNotNull(itemToDelete);
+
+        actions.moveToElement(itemToDelete).perform();
+        WebElement deleteButton = itemToDelete.findElement(By.cssSelector("button.destroy"));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", deleteButton);
+
+        Thread.sleep(1000); // wait for DOM update
+        assertTrue(driver.findElements(By.cssSelector("ul.todo-list li")).isEmpty());
+
+        // TC11: Tick off an item
+        // Add a new item "Item 1"
+        WebElement inputBox1 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        inputBox1.sendKeys("Item 1");
+        inputBox1.sendKeys(Keys.ENTER);
+
+        // Wait for item to appear
+        WebElement item1 = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+
+        // Tick the item
+        WebElement checkbox1 = item1.findElement(By.cssSelector("input.toggle"));
+        checkbox1.click();
+
+        // Verify item has "completed" class
+        String classAttr1 = item1.getAttribute("class");
+        assertTrue(classAttr1.contains("completed"), "Item should be marked as completed.");
+
+        // Screenshot
+        takeScreenshot(driver, "item_completed.png");
+
+        // TC12: Untick the same item
+        // Add a new item "Item 1"
+        WebElement inputBox2 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        inputBox1.sendKeys("Item 2");
+        inputBox1.sendKeys(Keys.ENTER);
+
+        //Wait for first item to be updated
+        WebElement item1Updated = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+
+        // Find checkbox
+        WebElement checkbox1Updated = item1Updated.findElement(By.cssSelector("input.toggle"));
+
+        // Untick it
+        checkbox1Updated.click();
+
+        // Verify class no longer contains "completed"
+        String classAfterUntick = item1Updated.getAttribute("class");
+        assertFalse(classAfterUntick.contains("completed"), "Item should no longer be marked as completed.");
+
+        // Screenshot
+        takeScreenshot(driver, "item_unticked.png");
 
     }
 
-    // Helper function for taking screenshots using WebDriver
-    public static void takeScreenshot(WebDriver webdriver,String desiredPath) throws Exception{
-        TakesScreenshot screenshot = ((TakesScreenshot)webdriver);
+    @AfterAll
+    static void closeBrowser() {
+        driver.quit();
+    }
+
+    public static void takeScreenshot(WebDriver webdriver, String desiredPath) throws Exception {
+        TakesScreenshot screenshot = ((TakesScreenshot) webdriver);
         File screenshotFile = screenshot.getScreenshotAs(OutputType.FILE);
         File targetFile = new File(desiredPath);
         FileUtils.copyFile(screenshotFile, targetFile);
     }
-    @AfterAll
-        static void closeBrowser() {
-        driver.quit();
-    }}
-
+}
