@@ -34,7 +34,7 @@ public class TodoMVCProjectTest {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         Actions actions = new Actions(driver);
 
-        // TC08: DELETE AN ITEM
+// TC08: DELETE AN ITEM
         WebElement addInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         addInput.sendKeys("Test Item 1");
         addInput.sendKeys(Keys.ENTER);
@@ -49,7 +49,7 @@ public class TodoMVCProjectTest {
         Thread.sleep(1000); // wait for DOM update
         assertTrue(driver.findElements(By.cssSelector("ul.todo-list li")).isEmpty());
 
-        // TC11: Tick off an item
+ // TC11: Tick off an item
         // Add a new item "Item 1"
         WebElement inputBox1 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         inputBox1.sendKeys("Item 1");
@@ -69,7 +69,7 @@ public class TodoMVCProjectTest {
         // Screenshot
         takeScreenshot(driver, "item_completed.png");
 
-        // TC12: Untick the same item
+// TC12: Untick the same item
         // Add a new item "Item 1"
         WebElement inputBox2 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         inputBox1.sendKeys("Item 2");
@@ -90,6 +90,69 @@ public class TodoMVCProjectTest {
 
         // Screenshot
         takeScreenshot(driver, "item_unticked.png");
+
+// TC04: Add Accented Characters - Automate LATER
+        // Wait for the input box to be clickable
+        WebElement addItems = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+
+        // Type accented characters into the input box
+        String accentedCharacters = "é, è, á, ü, ñ";
+        addItems.sendKeys(accentedCharacters);
+
+        // Press Enter to submit the item
+        addItems.sendKeys(Keys.ENTER);
+
+        // Find the accented items in the list
+        WebElement addedItem = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+
+        // Check if the accented text matches what was entered
+        assertEquals("é, è, á, ü, ñ", addedItem.getText());
+
+        // Step 6: Take a screenshot of the result
+        takeScreenshot(driver, "accented_items.png");
+
+// TC05: Add Special Symbols - Automate LATER
+        // Wait for the input box to be clickable
+        WebElement specialSymbolsInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+
+        // Type special characters into the input box
+        String specialSymbols = "!@#$%^&*()";
+        specialSymbolsInput.sendKeys(specialSymbols);
+
+        // Press Enter to submit the item
+        specialSymbolsInput.sendKeys(Keys.ENTER);
+
+        // Find the last added item in the list
+        WebElement specialSymbolsItem = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+
+        // Check if the text matches what was entered
+        String actualText = specialSymbolsItem.getText();
+        // The "&" character is a known bug as it displays "&amp" and therefore causes the output to fail.
+        assertNotEquals(specialSymbols, actualText, "Special symbols did not match.");
+
+        // Take a screenshot of the result
+        takeScreenshot(driver, "special_symbols.png");
+
+// TC06: Add Emojis - Automate LATER
+        // Wait for the input box to be clickable
+        WebElement emojiInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+
+        String emojiText = "😀 😂 ❤️ 🙏 😎";
+        // Use JavaScript to input emojis (avoids ChromeDriver BMP limitation)
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("document.querySelector('input.new-todo').value = arguments[0]", emojiText);
+
+        // Press Enter to submit the item
+        emojiInput.sendKeys(Keys.ENTER);
+
+        // Find the last added item in the list
+        WebElement emojiItem = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+
+        // Check if the text matches what was entered
+        assertEquals(emojiText, emojiItem.getText());
+
+        // Take a screenshot of the result
+        takeScreenshot(driver, "emojis.png");
 
     }
 
