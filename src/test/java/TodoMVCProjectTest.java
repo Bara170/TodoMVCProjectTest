@@ -1,7 +1,5 @@
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
@@ -14,157 +12,140 @@ import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TodoMVCProjectTest {
-    private static ChromeDriver driver;
 
-    @BeforeAll
-    static void launchBrowser() {
+    private ChromeDriver driver;
+    private WebDriverWait wait;
+    private Actions actions;
+
+    @BeforeEach
+    void setUp() {
+        // Set up ChromeDriver and open the TodoMVC app
         driver = new ChromeDriver();
-    }
-
-    @Test
-    void navigateToWebsite() throws Exception {
-        driver.get("https://todomvc.com/");
-        takeScreenshot(driver, "initial_screenshot.png");
-        System.out.println(driver.getTitle());
-    }
-
-    @Test
-    void addHoverDeleteAndModifyTodoItem() throws Exception {
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        actions = new Actions(driver);
         driver.get("https://todomvc.com/examples/react/dist/");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        Actions actions = new Actions(driver);
+    }
 
-// TC08: DELETE AN ITEM
-        WebElement addInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-        addInput.sendKeys("Test Item 1");
-        addInput.sendKeys(Keys.ENTER);
+    @Test
+    //TC08: Delete an Item
+    void DeleteAnItem() throws Exception {
+        // Add item
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        input.sendKeys("Test Item 1");
+        input.sendKeys(Keys.ENTER);
 
-        WebElement itemToDelete = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
-        assertNotNull(itemToDelete);
-
-        actions.moveToElement(itemToDelete).perform();
-        WebElement deleteButton = itemToDelete.findElement(By.cssSelector("button.destroy"));
+        // Hover and delete item
+        WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+        actions.moveToElement(item).perform();
+        WebElement deleteButton = item.findElement(By.cssSelector("button.destroy"));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", deleteButton);
 
-        Thread.sleep(1000); // wait for DOM update
+        Thread.sleep(1000); // Allow time
         assertTrue(driver.findElements(By.cssSelector("ul.todo-list li")).isEmpty());
 
- // TC11: Tick off an item
-        // Add a new item "Item 1"
-        WebElement inputBox1 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-        inputBox1.sendKeys("Item 1");
-        inputBox1.sendKeys(Keys.ENTER);
+        takeScreenshot(driver, "deleted_item.png");
+    }
 
-        // Wait for item to appear
-        WebElement item1 = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+    @Test
+    // TC11: Tick Off Item
+    void TickOffItem() throws Exception {
+        // Add item
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        input.sendKeys("Item 1");
+        input.sendKeys(Keys.ENTER);
 
-        // Tick the item
-        WebElement checkbox1 = item1.findElement(By.cssSelector("input.toggle"));
-        checkbox1.click();
+        // Tick checkbox
+        WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+        WebElement checkbox = item.findElement(By.cssSelector("input.toggle"));
+        checkbox.click();
 
-        // Verify item has "completed" class
-        String classAttr1 = item1.getAttribute("class");
-        assertTrue(classAttr1.contains("completed"), "Item should be marked as completed.");
+        // Check if item is marked as completed
+        String classAttr = item.getAttribute("class");
+        assertTrue(classAttr.contains("completed"));
 
-        // Screenshot
         takeScreenshot(driver, "item_completed.png");
+    }
 
-// TC12: Untick the same item
-        // Add a new item "Item 1"
-        WebElement inputBox2 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-        inputBox1.sendKeys("Item 2");
-        inputBox1.sendKeys(Keys.ENTER);
+    @Test
+    // TC12: Untick Item
+    void UntickItem() throws Exception {
+        // Add item
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        input.sendKeys("Item 1");
+        input.sendKeys(Keys.ENTER);
 
-        //Wait for first item to be updated
-        WebElement item1Updated = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+        // Tick and then untick
+        WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
+        WebElement checkbox = item.findElement(By.cssSelector("input.toggle"));
+        checkbox.click(); // Tick
+        Thread.sleep(500);
+        checkbox.click(); // Untick
 
-        // Find checkbox
-        WebElement checkbox1Updated = item1Updated.findElement(By.cssSelector("input.toggle"));
+        // Confirm it's no longer marked as completed
+        String classAttr = item.getAttribute("class");
+        assertFalse(classAttr.contains("completed"));
 
-        // Untick it
-        checkbox1Updated.click();
+        takeScreenshot(driver, "unticked.png");
+    }
 
-        // Verify class no longer contains "completed"
-        String classAfterUntick = item1Updated.getAttribute("class");
-        assertFalse(classAfterUntick.contains("completed"), "Item should no longer be marked as completed.");
+    @Test
+    // TC04: Add Accented Characters - Automate Later
+    void AddAccentedCharacters() throws Exception {
+        // Add accented characters
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        String text = "é, è, á, ü, ñ";
+        input.sendKeys(text);
+        input.sendKeys(Keys.ENTER);
 
-        // Screenshot
-        takeScreenshot(driver, "item_unticked.png");
+        WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+        assertEquals(text, item.getText());
 
-// TC04: Add Accented Characters - Automate LATER
-        // Wait for the input box to be clickable
-        WebElement addItems = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        takeScreenshot(driver, "accented_characters.png");
+    }
 
-        // Type accented characters into the input box
-        String accentedCharacters = "é, è, á, ü, ñ";
-        addItems.sendKeys(accentedCharacters);
+    @Test
+    // TC05 - Add Special Symbols - Automate Later
+    void AddSpecialSymbols() throws Exception {
+        // Add special characters
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
+        String symbols = "!@#$%^&*()";
+        input.sendKeys(symbols);
+        input.sendKeys(Keys.ENTER);
 
-        // Press Enter to submit the item
-        addItems.sendKeys(Keys.ENTER);
-
-        // Find the accented items in the list
-        WebElement addedItem = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
-
-        // Check if the accented text matches what was entered
-        assertEquals("é, è, á, ü, ñ", addedItem.getText());
-
-        // Step 6: Take a screenshot of the result
-        takeScreenshot(driver, "accented_items.png");
-
-// TC05: Add Special Symbols - Automate LATER
-        // Wait for the input box to be clickable
-        WebElement specialSymbolsInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-
-        // Type special characters into the input box
-        String specialSymbols = "!@#$%^&*()";
-        specialSymbolsInput.sendKeys(specialSymbols);
-
-        // Press Enter to submit the item
-        specialSymbolsInput.sendKeys(Keys.ENTER);
-
-        // Find the last added item in the list
-        WebElement specialSymbolsItem = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
-
-        // Check if the text matches what was entered
-        String actualText = specialSymbolsItem.getText();
+        WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+        String actualText = item.getText();
         // The "&" character is a known bug as it displays "&amp" and therefore causes the output to fail.
-        assertNotEquals(specialSymbols, actualText, "Special symbols did not match.");
+        assertNotEquals(symbols, actualText, "Special symbols did not match.");
 
-        // Take a screenshot of the result
         takeScreenshot(driver, "special_symbols.png");
+    }
 
-// TC06: Add Emojis - Automate LATER
-        // Wait for the input box to be clickable
-        WebElement emojiInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-
+    @Test
+    // TC06: Add Emojis - Automate Later
+    void AddEmojis() throws Exception {
+        // Add emojis
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         String emojiText = "😀 😂 ❤️ 🙏 😎";
-        // Use JavaScript to input emojis (avoids ChromeDriver BMP limitation)
-        JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript("document.querySelector('input.new-todo').value = arguments[0]", emojiText);
 
-        // Press Enter to submit the item
-        emojiInput.sendKeys(Keys.ENTER);
+        ((JavascriptExecutor) driver).executeScript("document.querySelector('input.new-todo').value = arguments[0]", emojiText);
+        input.sendKeys(Keys.ENTER);
 
-        // Find the last added item in the list
-        WebElement emojiItem = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+        WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
+        assertEquals(emojiText, item.getText());
 
-        // Check if the text matches what was entered
-        assertEquals(emojiText, emojiItem.getText());
-
-        // Take a screenshot of the result
         takeScreenshot(driver, "emojis.png");
-
     }
 
-    @AfterAll
-    static void closeBrowser() {
-        driver.quit();
-    }
-
-    public static void takeScreenshot(WebDriver webdriver, String desiredPath) throws Exception {
+    // Screenshot method
+    public static void takeScreenshot(WebDriver webdriver, String path) throws Exception {
         TakesScreenshot screenshot = ((TakesScreenshot) webdriver);
-        File screenshotFile = screenshot.getScreenshotAs(OutputType.FILE);
-        File targetFile = new File(desiredPath);
-        FileUtils.copyFile(screenshotFile, targetFile);
+        File srcFile = screenshot.getScreenshotAs(OutputType.FILE);
+        FileUtils.copyFile(srcFile, new File(path));
+    }
+
+    // Close the browser after each test
+    @AfterEach
+    void tearDown() {
+        driver.quit();
     }
 }
