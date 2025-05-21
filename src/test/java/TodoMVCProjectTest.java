@@ -34,7 +34,7 @@ public class TodoMVCProjectTest {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         Actions actions = new Actions(driver);
 
-        // TC08: DELETE AN ITEM
+// TC08: DELETE AN ITEM
         WebElement addInput = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         addInput.sendKeys("Test Item 1");
         addInput.sendKeys(Keys.ENTER);
@@ -49,7 +49,7 @@ public class TodoMVCProjectTest {
         Thread.sleep(1000); // wait for DOM update
         assertTrue(driver.findElements(By.cssSelector("ul.todo-list li")).isEmpty());
 
-        // TC11: Tick off an item
+ // TC11: Tick off an item
         // Add a new item "Item 1"
         WebElement inputBox1 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         inputBox1.sendKeys("Item 1");
@@ -69,7 +69,7 @@ public class TodoMVCProjectTest {
         // Screenshot
         takeScreenshot(driver, "item_completed.png");
 
-        // TC12: Untick the same item
+// TC12: Untick the same item
         // Add a new item "Item 1"
         WebElement inputBox2 = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
         inputBox1.sendKeys("Item 2");
