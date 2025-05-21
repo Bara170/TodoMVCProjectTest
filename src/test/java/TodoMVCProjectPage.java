@@ -12,22 +12,22 @@ import java.time.Duration;
 import java.util.List;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-public class TodoMVCProjectPage {
-    private WebDriver driver;
-    private WebDriverWait wait;
-
-    public TodoMVCProjectPage(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-
-    }
-    public void open() {
-        driver.get("https://todomvc.com/examples/react/dist/");
-    }
-    public void addItem(String text) {
-        WebElement inputBox = driver.findElement(By.id("todo-input"));
-        inputBox.sendKeys(text);
-        inputBox.sendKeys(Keys.ENTER);
-    }
-
-}
+//public class TodoMVCProjectPage {
+//    private WebDriver driver;
+//    //private WebDriverWait wait;
+//
+//    public TodoMVCProjectPage(WebDriver driver) {
+//        this.driver = driver;
+//        //this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+//
+//    }
+//    public void open() {
+//        driver.get("https://todomvc.com/examples/react/dist/");
+//    }
+//    public void addItem(String text) {
+//        WebElement inputBox = driver.findElement(By.id("todo-input"));
+//        inputBox.sendKeys(text);
+//        inputBox.sendKeys(Keys.ENTER);
+//    }
+//
+//}
