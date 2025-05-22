@@ -14,21 +14,21 @@ public class TodoMVCProjectTest {
     private static ChromeDriver driver;
     private WebDriverWait wait;
     private Actions actions;
+    private TodoMVCProjectPage todoPage;
 
     @BeforeAll
     static void launchBrowser() {
-        TodoMVCProjectPage todoPage = new TodoMVCProjectPage(driver);
         driver = new ChromeDriver();
-        driver.get("https://todomvc.com/examples/react/dist/");
-
+        //driver.get("https://todomvc.com/examples/react/dist/");
     }
-
     @BeforeEach
     void setUp() {
         // Set up ChromeDriver and open the TodoMVC app
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        actions = new Actions(driver);}
-        TodoMVCProjectPage todoPage = new TodoMVCProjectPage(driver);
+        actions = new Actions(driver);
+        todoPage = new TodoMVCProjectPage(driver);
+        todoPage.open();
+    }
 
     @Test //TC00: Launch TodoMVC Site
     public void navigateToWebsite() throws Exception {
@@ -43,7 +43,6 @@ public class TodoMVCProjectTest {
         //add item
         todoPage.addItem("Item 1");
 
-
         WebElement toDoList = driver.findElement(By.cssSelector("ul.todo-list[data-testid='todo-list']"));
         assertTrue(toDoList.isDisplayed());
         assertEquals("Item 1", toDoList.getText());
@@ -53,10 +52,9 @@ public class TodoMVCProjectTest {
     @Test //TC02: Prevent Empty Todo
     public void preventEmptyToDo() throws Exception {
         todoPage.refresh();
-        //add item
-        WebElement inputBox = driver.findElement(By.id("todo-input"));
-        inputBox.click();
-        inputBox.sendKeys(Keys.ENTER);
+        //try adding an empty string
+        todoPage.addItem("");
+
         WebElement toDoList = driver.findElement(By.cssSelector("ul.todo-list[data-testid='todo-list']"));
         assertFalse(toDoList.isDisplayed());
         takeScreenshot(driver, "sending_empty_input.png");
@@ -65,10 +63,9 @@ public class TodoMVCProjectTest {
     @Test //TC03: Add Single Character
     public void addSingleCharacter() throws Exception {
         todoPage.refresh();
-        //add item
-        WebElement inputBox = driver.findElement(By.id("todo-input"));
-        inputBox.sendKeys("a", Keys.ENTER);
-        takeScreenshot(driver, "add_single_char.png");
+        //try adding a single character
+        todoPage.addItem("a");
+
         WebElement toDoList = driver.findElement(By.cssSelector("ul.todo-list[data-testid='todo-list']"));
         assertFalse(toDoList.isDisplayed());
         takeScreenshot(driver, "sending_single_char.png");
@@ -77,29 +74,20 @@ public class TodoMVCProjectTest {
     @Test //TC04: Add Accented Characters - Automate Later
     void AddAccentedCharacters() throws Exception {
         // Add accented characters
-        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-        String text = "é, è, á, ü, ñ";
-        input.sendKeys(text);
-        input.sendKeys(Keys.ENTER);
+        todoPage.addItem( "é, è, á, ü, ñ");
 
         WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
-        assertEquals(text, item.getText());
-
+        assertEquals("é, è, á, ü, ñ", item.getText());
         takeScreenshot(driver, "accented_characters.png");
     }
     @Test //TC05: Add Special Symbols - Automate Later
     void AddSpecialSymbols() throws Exception {
         // Add special characters
-        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-        String symbols = "!@#$%^&*()";
-        input.sendKeys(symbols);
-        input.sendKeys(Keys.ENTER);
+        todoPage.addItem("!@#$%^&*()");
 
         WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
-        String actualText = item.getText();
         // The "&" character is a known bug as it displays "&amp" and therefore causes the output to fail.
-        assertNotEquals(symbols, actualText, "Special symbols did not match.");
-
+        assertNotEquals("!@#$%^&*()", item.getText());
         takeScreenshot(driver, "special_symbols.png");
     }
 
@@ -114,7 +102,6 @@ public class TodoMVCProjectTest {
 
         WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li:last-child")));
         assertEquals(emojiText, item.getText());
-
         takeScreenshot(driver, "emojis.png");
     }
 
@@ -122,18 +109,16 @@ public class TodoMVCProjectTest {
     void DeleteAnItem() throws Exception {
         todoPage.refresh();
         // Add item
-        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("input.new-todo")));
-        input.sendKeys("Test Item 1");
-        input.sendKeys(Keys.ENTER);
+        todoPage.addItem("Item 1");
 
         // Hover and delete item
         WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
         actions.moveToElement(item).perform();
         WebElement deleteButton = item.findElement(By.cssSelector("button.destroy"));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", deleteButton);
+
         // Allow time
         assertTrue(driver.findElements(By.cssSelector("ul.todo-list li")).isEmpty());
-
         takeScreenshot(driver, "deleted_item.png");
     }
 
@@ -141,20 +126,10 @@ public class TodoMVCProjectTest {
     public void modifyItem() throws Exception {
         todoPage.refresh();
         //add items
-        WebElement inputBox = driver.findElement(By.id("todo-input"));
-        inputBox.sendKeys("Item 1", Keys.ENTER);
+        todoPage.addItem("Item 1");
 
-        //double-click on the item we want to edit
-        Actions actions = new Actions(driver);
-        WebElement itemToModify = driver.findElement(By.cssSelector("li[data-testid='todo-item"));
-        actions.doubleClick(itemToModify).perform();
-        takeScreenshot(driver, "after_double_click.png");
-
-        //locate the edit box and edit text
-        WebElement editBox = itemToModify.findElement(By.cssSelector("input.new-todo"));
-        editBox.sendKeys(Keys.chord(Keys.COMMAND, "a"));
-        editBox.sendKeys(Keys.DELETE);
-        editBox.sendKeys("Item edited", Keys.ENTER);
+        //edit item
+        todoPage.editItem("Item 1", "Item edited");
         takeScreenshot(driver, "item_edited.png");
 
         //assert text has been edited
@@ -174,7 +149,6 @@ public class TodoMVCProjectTest {
         String classAttr = item.getAttribute("class");
         System.out.println(item.getAttribute("class"));
         assertTrue(classAttr.contains("completed"));
-
         takeScreenshot(driver, "item_completed.png");
     }
 
@@ -193,7 +167,6 @@ public class TodoMVCProjectTest {
         WebElement item = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.todo-list li")));
         String classAttr = item.getAttribute("class");
         assertFalse(classAttr.contains("completed"));
-
         takeScreenshot(driver, "unticked.png");
     }
 
@@ -201,46 +174,38 @@ public class TodoMVCProjectTest {
     public void statusBarTest() {
         todoPage.refresh();
         //add an item and confirm status bar shows 1 item left
-        WebElement inputBox = driver.findElement(By.id("todo-input"));
-        inputBox.sendKeys("Item 1", Keys.ENTER);
-        WebElement statusBar = driver.findElement(By.cssSelector("span.todo-count"));
-        assertEquals("1 item left!", statusBar.getText());
+        todoPage.addItem("Item 1");
+        assertEquals("1 item left!", todoPage.getStatus());
 
         //add a second item and confirm status bar shows 2 items left
-        inputBox.sendKeys("Item 2", Keys.ENTER);
-        assertEquals("2 items left!", statusBar.getText());
+        todoPage.addItem("Item 2");
+        assertEquals("2 items left!", todoPage.getStatus());
 
         //mark all items complete and confirm status bar shows 0 items left
-        WebElement toggleAllButton = driver.findElement(By.id("toggle-all"));
-        toggleAllButton.click();
-        assertEquals("0 items left!", statusBar.getText());
+        todoPage.toggleAllItems();
+        assertEquals("0 items left!", todoPage.getStatus());
     }
+
     @Test //TC17, TC18 & TC19: Filter
     public void filterItems() throws Exception{
         todoPage.refresh();
         //add items
         todoPage.addItem("Item 1");
         todoPage.addItem("Item 2");
-        //locate the item in the list and tick completed
+        //tick one item completed
         todoPage.toggleItem("Item 1");
 
         //filter active
         todoPage.filterBy("active");
         takeScreenshot(driver, "active_filtered.png");
         // assert the active items have been filtered
-        List<WebElement> checkboxesActive = driver.findElements(By.cssSelector("input.toggle[data-testid='todo-item-toggle']"));
-        for (WebElement checkbox : checkboxesActive) {
-            assertFalse(checkbox.isSelected());
-        }
+        assertAllItemsToggleState(false);
 
         //filter completed
         todoPage.filterBy("completed");
         takeScreenshot(driver, "completed_filtered.png");
         // assert the completed items have been filtered
-        List<WebElement> checkboxesCompleted = driver.findElements(By.cssSelector("input.toggle[data-testid='todo-item-toggle']"));
-        for (WebElement checkbox : checkboxesCompleted) {
-            assertTrue(checkbox.isSelected());
-        }
+        assertAllItemsToggleState(true);
 
         //filter all
         todoPage.filterBy("all");
@@ -265,10 +230,10 @@ public class TodoMVCProjectTest {
         todoPage.toggleItem("Item 1");
         //click clear completed
         todoPage.clearCompletedItems();
-        takeScreenshot(driver, "cleared_completed.png");
 
         //check completed items have been removed
         Assertions.assertEquals(1, todoPage.getTodoItems().size());
+        takeScreenshot(driver, "cleared_completed.png");
     }
 
     @Test //TC22: Toggle All Items
@@ -284,17 +249,21 @@ public class TodoMVCProjectTest {
         todoPage.toggleAllItems();
         takeScreenshot(driver, "all_items_ticked.png");
         //check all toggles have been ticked off
-        List<WebElement> checkboxes = driver.findElements(By.cssSelector("input.toggle[data-testid='todo-item-toggle']"));
-        for (WebElement checkbox : checkboxes) {
-            assertTrue(checkbox.isSelected());
-        }
+        assertAllItemsToggleState(true);
 
         //uncheck all items
         todoPage.toggleAllItems();
-        takeScreenshot(driver, "all_items_unticked.png");
+
         //check all items have been unticked
+        assertAllItemsToggleState(false);
+        takeScreenshot(driver, "all_items_unticked.png");
+    }
+
+    //Helper method to assert all visible items' toggle states
+    private void assertAllItemsToggleState(boolean expectedState) {
+        List<WebElement> checkboxes = driver.findElements(By.cssSelector("input.toggle[data-testid='todo-item-toggle']"));
         for (WebElement checkbox : checkboxes) {
-            assertFalse(checkbox.isSelected());
+            assertEquals(expectedState, checkbox.isSelected());
         }
     }
 
